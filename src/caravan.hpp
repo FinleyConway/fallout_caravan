@@ -1,0 +1,125 @@
+#pragma once
+
+#include <vector>
+#include <cstdint>
+
+#include "card.hpp"
+
+class caravan_t {
+private:
+    enum class direction_t {
+        none,
+        ascending,
+        descending
+    };
+
+    struct card_row_t {
+        card_t card;
+        uint8_t king_modifiers = 0; 
+        uint8_t queen_modifiers = 0; 
+
+        explicit card_row_t(card_t card) : card(card) {
+        }
+
+        uint8_t value() const {
+            return card.value() * king_modifiers;
+        }
+    };
+
+public:
+    bool try_place_card(card_t card, uint8_t row = 0) {
+        if (card.is_special()) {
+            // has the caravan got a card  yet or out of bounds
+            if (m_cards.empty() || row >= m_cards.size()) {
+                return false;
+            }
+
+            switch (card.type()) {
+                case card_t::type_t::jack:  return false;
+                case card_t::type_t::queen: return on_queen_add(card, row);
+                case card_t::type_t::king:  return false;
+                case card_t::type_t::joker: return false;
+                default: return false;
+            };
+        }
+
+        return try_place_number_card(card);
+    } 
+
+    
+
+    uint8_t value() const {
+        uint8_t value = 0;
+
+        for (const auto& row : m_cards) {
+            value += row.value();
+        }
+
+        return value;
+    }
+
+private:
+    bool try_place_number_card(card_t card) {
+        // has a card not been placed yet?
+        if (m_cards.empty()) {
+            m_current_suit = card.suit();
+            m_cards.emplace_back(card);
+
+            return true;
+        }
+
+        // get the previously placed card
+        const card_t& previous = m_cards.back().card;
+        
+        // cant play the same numerical value in sequence
+        if (card.value() == previous.value()) return false;
+
+        // has the direction not been decided yet?
+        if (m_direction == direction_t::none) {
+            m_direction = card.value() > previous.value()
+                ? direction_t::ascending
+                : direction_t::descending;
+        }
+
+        bool follows_direction = is_follows_direction(card.value(), previous.value());
+        bool follows_suit = card.suit() == m_current_suit;
+
+        if (!follows_direction && !follows_suit) return false;
+
+        m_cards.emplace_back(card);
+        m_current_suit = card.suit();
+
+        return true;
+    }
+
+    bool is_follows_direction(uint8_t card_value, uint8_t prev_card_value) const {
+        return m_direction == direction_t::ascending
+            ? card_value > prev_card_value
+            : card_value < prev_card_value;
+    }
+
+    bool on_queen_add(card_t queen, uint8_t row) {
+        card_row_t& card_row = m_cards[row];
+
+        // selected the previously placed card?
+        if (row == m_cards.size() - 1) {
+            if (m_direction == direction_t::ascending) {
+                m_direction = direction_t::descending;
+            }
+            else {
+                m_direction = direction_t::ascending;
+            }
+
+            m_current_suit = queen.suit();
+        }
+
+        card_row.queen_modifiers++;
+
+        return true;
+    }
+
+private:
+    std::vector<card_row_t> m_cards;
+    direction_t m_direction = direction_t::none; 
+    card_t::suit_t m_current_suit = card_t::suit_t::none;
+};
