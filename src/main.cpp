@@ -15,6 +15,7 @@ struct table_t {
     player_t player_b;
 };
 
+constexpr card_t jack(card_t::type_t::jack, card_t::suit_t::club);
 constexpr card_t queen(card_t::type_t::queen, card_t::suit_t::club);
 constexpr card_t king(card_t::type_t::king, card_t::suit_t::club);
 
@@ -33,15 +34,25 @@ int main() {
         printf("Placed!\n");
     }
 
+    printf("Current caravan value: %d\n", (int)c.value());
+    printf("Current caravan direction: %s\n", (int)c.direction() == 1 ? "ascending" : "descending");
+    printf("Current caravan suit: %d\n", (int)c.suit());
+
+    if (c.try_place_card(queen, 1)) {
+        printf("Placed!\n");
+    }
+
     if (c.try_place_card(three)) {
         printf("Placed!\n");
     }
 
-    if (c.try_place_card(king, 0)) {
+    if (c.try_place_card(jack, 1)) {
         printf("Placed!\n");
     }
 
     printf("Current caravan value: %d\n", (int)c.value());
+    printf("Current caravan direction: %s\n", (int)c.direction() == 1 ? "ascending" : "descending");
+    printf("Current caravan suit: %d\n", (int)c.suit());
 
     //if (c.try_place_card(queen, 0)) {
     //  printf("Placed!\n");

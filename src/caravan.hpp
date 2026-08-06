@@ -8,12 +8,6 @@
 
 class caravan_t {
 private:
-    enum class direction_t {
-        none,
-        ascending,
-        descending
-    };
-
     struct card_row_t {
         card_t card;
         uint8_t king_modifiers = 0; 
@@ -34,6 +28,14 @@ private:
     };
 
 public:
+    enum class direction_t {
+        none,
+        ascending,
+        descending
+    };
+
+
+public:
     bool try_place_card(card_t card, uint8_t row = 0) {
         if (card.is_special()) {
             // has the caravan got a card  yet or out of bounds
@@ -42,7 +44,7 @@ public:
             }
 
             switch (card.type()) {
-                case card_t::type_t::jack:  return false;
+                case card_t::type_t::jack:  return on_jack_add(card, row);
                 case card_t::type_t::queen: return on_queen_add(card, row);
                 case card_t::type_t::king:  return on_king_add(card, row);
                 case card_t::type_t::joker: return false;
@@ -53,8 +55,6 @@ public:
         return try_place_number_card(card);
     } 
 
-    
-
     uint8_t value() const {
         uint8_t value = 0;
 
@@ -63,6 +63,14 @@ public:
         }
 
         return value;
+    }
+
+    direction_t direction() const {
+        return m_direction;
+    }
+
+    card_t::suit_t suit() const {
+        return m_current_suit;
     }
 
 private:
@@ -126,6 +134,45 @@ private:
         card_row_t& card_row = m_cards[row];
 
         card_row.king_modifiers++;
+
+        return true;
+    }
+
+    bool on_jack_add(card_t jack, uint8_t row) {
+        // removes card row for caravan
+        m_cards.erase(m_cards.begin() + row);
+
+        // update the deck to reflect on changes
+        // have we removed all cards, set back to default?
+        if (m_cards.empty()) {
+            m_direction = direction_t::none;
+            m_current_suit = card_t::suit_t::none;
+
+            return true;
+        }
+
+        // TODO: reflect on queen modifier too
+        const card_t& top = m_cards.back().card;
+
+        // update suit
+        m_current_suit = top.suit();
+
+        // set direction to none if only one card
+        if (m_cards.size() == 1) {
+            m_direction = direction_t::none;
+
+            return true;
+        }
+
+        // check if asc or des based on the top 2 previous cards
+        const card_t& below_top = (m_cards.end() - 2)->card;
+
+        if (top.value() >= below_top.value()) {
+            m_direction = direction_t::ascending;
+        }
+        else {
+            m_direction = direction_t::descending;
+        }
 
         return true;
     }
