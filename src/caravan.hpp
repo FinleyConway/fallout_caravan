@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <stdio.h>
 
 #include "card.hpp"
 
@@ -22,7 +23,13 @@ private:
         }
 
         uint8_t value() const {
-            return card.value() * king_modifiers;
+            if (king_modifiers > 0) {
+                const uint8_t offset = 1;
+
+                return card.value() * (king_modifiers + offset);    
+            }
+
+            return card.value();
         }
     };
 
@@ -37,7 +44,7 @@ public:
             switch (card.type()) {
                 case card_t::type_t::jack:  return false;
                 case card_t::type_t::queen: return on_queen_add(card, row);
-                case card_t::type_t::king:  return false;
+                case card_t::type_t::king:  return on_king_add(card, row);
                 case card_t::type_t::joker: return false;
                 default: return false;
             };
@@ -81,10 +88,7 @@ private:
                 : direction_t::descending;
         }
 
-        bool follows_direction = is_follows_direction(card.value(), previous.value());
-        bool follows_suit = card.suit() == m_current_suit;
-
-        if (!follows_direction && !follows_suit) return false;
+        if (!is_follows_direction(card.value(), previous.value())) return false;
 
         m_cards.emplace_back(card);
         m_current_suit = card.suit();
@@ -114,6 +118,14 @@ private:
         }
 
         card_row.queen_modifiers++;
+
+        return true;
+    }
+
+    bool on_king_add(card_t king, uint8_t row) {
+        card_row_t& card_row = m_cards[row];
+
+        card_row.king_modifiers++;
 
         return true;
     }

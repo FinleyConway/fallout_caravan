@@ -16,7 +16,11 @@ struct table_t {
 };
 
 constexpr card_t queen(card_t::type_t::queen, card_t::suit_t::club);
+constexpr card_t king(card_t::type_t::king, card_t::suit_t::club);
+
 constexpr card_t one(card_t::type_t::one, card_t::suit_t::club);
+constexpr card_t two(card_t::type_t::two, card_t::suit_t::club);
+constexpr card_t three(card_t::type_t::three, card_t::suit_t::club);
 
 int main() {
     caravan_t c;
@@ -25,9 +29,21 @@ int main() {
         printf("Placed!\n");
     }
 
-    
-
-    if (c.try_place_card(queen, 0)) {
+    if (c.try_place_card(two)) {
         printf("Placed!\n");
     }
+
+    if (c.try_place_card(three)) {
+        printf("Placed!\n");
+    }
+
+    if (c.try_place_card(king, 0)) {
+        printf("Placed!\n");
+    }
+
+    printf("Current caravan value: %d\n", (int)c.value());
+
+    //if (c.try_place_card(queen, 0)) {
+    //  printf("Placed!\n");
+    //}
 }
